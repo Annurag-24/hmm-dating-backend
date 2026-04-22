@@ -1751,13 +1751,22 @@ class UsersController extends Controller
         $user->save();
 
         if ($req->hasFile('image')) {
-            $files = $req->file('image');
-            for ($i = 0; $i < count($files); $i++) {
-                $image = new Images();
-                $image->user_id = $user->id;
-                $path = GlobalFunction::saveFileAndGivePath($files[$i]);
-                $image->image = $path;
-                $image->save();
+            try {
+                $files = $req->file('image');
+                for ($i = 0; $i < count($files); $i++) {
+                    $image = new Images();
+                    $image->user_id = $user->id;
+                    $path = GlobalFunction::saveFileAndGivePath($files[$i]);
+                    $image->image = $path;
+                    $image->save();
+                }
+            } catch (\Throwable $e) {
+                report($e);
+
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Profile updated, but image upload failed.',
+                ], 500);
             }
         }
 
