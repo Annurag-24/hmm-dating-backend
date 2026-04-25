@@ -154,8 +154,10 @@ class GlobalFunction extends Model
     public static function saveFileAndGivePath($file)
     {
         if ($file != null) {
-            // Store in public disk so files are accessible via storage symlink
-            $path = $file->store('uploads', 'public');
+            // Use extension() to detect from MIME type, not client-supplied name
+            $extension = $file->extension();
+            $filename = \Illuminate\Support\Str::random(40) . '.' . $extension;
+            $path = $file->storeAs('uploads', $filename, 'public');
             return $path;
         } else {
             return null;
