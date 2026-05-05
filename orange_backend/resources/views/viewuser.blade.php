@@ -143,7 +143,7 @@
                         @endif
                     </div>
                     <div class="form-group mb-2">
-                        <label class="m-0">{{ __('app.RelationshipGoal') }} : </label> {{ $matchedRelationshipGoal->title }}
+                        <label class="m-0">{{ __('app.RelationshipGoal') }} : </label> {{ optional($matchedRelationshipGoal)->title }}
                     </div>
 
                     <div class="form-group mb-2">
