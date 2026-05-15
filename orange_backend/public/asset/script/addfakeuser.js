@@ -1,6 +1,22 @@
 $(document).ready(function () {
     var productimages = [];
 
+    function checkFormValidity() {
+        var filled =
+            $("#fullname").val().trim() !== "" &&
+            $("#country").val() !== "" &&
+            $("#state").val() !== "" &&
+            $("#city").val() !== "" &&
+            $("#bio").val().trim() !== "" &&
+            $("#about").val().trim() !== "" &&
+            $("#password").val().trim() !== "" &&
+            productimages.length > 0;
+        $("#submitBtn").prop("disabled", !filled);
+    }
+
+    $("#fullname, #bio, #about, #password").on("input", checkFormValidity);
+    $("#country, #state, #city").on("change", checkFormValidity);
+
     $(document).on("change", "#productimages", function () {
         var imgElement = "";
         var input = $("#productimages")[0];
@@ -44,6 +60,7 @@ $(document).ready(function () {
                 reader.readAsDataURL(input.files[i]);
             }
         }
+        checkFormValidity();
     });
 
     $(document).on("click", ".remove_img2", function () {
@@ -67,6 +84,7 @@ $(document).ready(function () {
 
         console.log(productimages);
         console.log(productimages.length);
+        checkFormValidity();
     });
 
     $("#addForm").on("submit", function (event) {

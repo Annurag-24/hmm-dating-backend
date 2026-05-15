@@ -178,7 +178,7 @@
 
             <div class="form-row mt-3">
                 <div class="form-group col-md-3 col-sm-12">
-                    <label>{{ __('Full Name') }}</label>
+                    <label>{{ __('Full Name') }} <span class="text-danger">*</span></label>
                     <input id="fullname" class="form-control" name="fullname" value="" required>
                 </div>
                 <!-- <div class="form-group col-md-3 col-sm-12">
@@ -186,21 +186,21 @@
                     <input id="location" class="form-control" name="live" value="" required>
                 </div> -->
                 <div class="form-group col-md-3 col-sm-12">
-                    <label>{{ __('Country') }}</label>
+                    <label>{{ __('Country') }} <span class="text-danger">*</span></label>
                     <select id="country" class="form-control" name="country" required>
                         <option value="">Select Country</option>
                     </select>
                 </div>
 
                 <div class="form-group col-md-3 col-sm-12">
-                    <label>{{ __('State') }}</label>
+                    <label>{{ __('State') }} <span class="text-danger">*</span></label>
                     <select id="state" class="form-control" name="state" required disabled>
                         <option value="">Select State</option>
                     </select>
                 </div>
 
                 <div class="form-group col-md-3 col-sm-12">
-                    <label>{{ __('City') }}</label>
+                    <label>{{ __('City') }} <span class="text-danger">*</span></label>
                     <select id="city" class="form-control" name="city" required disabled>
                         <option value="">Select City</option>
                     </select>
@@ -220,11 +220,11 @@
             <div class="form-row ">
 
                 <div class="form-group col-md-6 col-sm-12">
-                    <label for="bio">{{ __('Bio') }} </label>
+                    <label for="bio">{{ __('Bio') }} <span class="text-danger">*</span></label>
                     <textarea id="bio" name="bio" class="form-control" required></textarea>
                 </div>
                 <div class="form-group col-md-6 col-sm-12">
-                    <label for="about">{{ __('About') }} </label>
+                    <label for="about">{{ __('About') }} <span class="text-danger">*</span></label>
                     <textarea id="about" name="about" class="form-control" required></textarea>
                 </div>
             </div>
@@ -246,13 +246,13 @@
 
             <div class="form-row ">
                 <div class="form-group col-md-3 col-sm-12">
-                    <label>{{ __('Password') }}</label>
+                    <label>{{ __('Password') }} <span class="text-danger">*</span></label>
                     <input id="password" class="form-control" name="password" value="" required>
                 </div>
             </div>
 
             <div class="form-group">
-                <input class="btn btn-primary mr-1" type="submit" value=" {{ __('Submit') }}">
+                <input id="submitBtn" class="btn btn-primary mr-1" type="submit" value=" {{ __('Submit') }}" disabled>
             </div>
 
         </form>
