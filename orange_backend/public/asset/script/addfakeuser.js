@@ -3,14 +3,15 @@ $(document).ready(function () {
 
     function checkFormValidity() {
         var filled =
+            productimages.length > 0 &&
             $("#fullname").val().trim() !== "" &&
             $("#country").val() !== "" &&
             $("#state").val() !== "" &&
             $("#city").val() !== "" &&
             $("#bio").val().trim() !== "" &&
             $("#about").val().trim() !== "" &&
-            $("#password").val().trim() !== "" &&
-            productimages.length > 0;
+            $("#password").val().trim() !== "";
+        $("#imgRequiredHint").toggle(productimages.length === 0);
         $("#submitBtn").prop("disabled", !filled);
     }
 

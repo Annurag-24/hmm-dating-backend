@@ -1,6 +1,6 @@
 @extends('include.app')
 @section('header')
-<script src="{{ asset('asset/script/addfakeuser.js') }}"></script>
+<script src="{{ asset('asset/script/addfakeuser.js') }}?v={{ time() }}"></script>
 <link rel="stylesheet" href="{{ asset('asset/style/addFakeUser.css') }}">
 @endsection
 
@@ -170,8 +170,9 @@
 
             <div id="imgInput" class="form-group">
                 <label for="productimages">
-                    <a class="btn btn-primary text-white">{{ __('Add Image') }}</a>
+                    <a class="btn btn-primary text-white">{{ __('Add Image') }} <span style="color:#fff;font-weight:bold;">*</span></a>
                 </label>
+                <span id="imgRequiredHint" class="text-danger ml-2" style="font-size:13px;">At least one image is required</span>
                 <input type="file" class="form-control d-none" id="productimages" name="image" accept="image/x-png,image/gif,image/jpeg" multiple>
             </div>
             {{-- Other field start --}}
