@@ -216,6 +216,10 @@
                         <option value="1">{{ __('Male') }}</option>
                     </select>
                 </div>
+                <div class="form-group col-md-3 col-sm-12">
+                    <label for="age">{{ __('Age') }} <span class="text-danger">*</span></label>
+                    <input id="age" class="form-control" name="age" type="number" min="18" max="80" placeholder="e.g. 25" required>
+                </div>
             </div>
 
             <div class="form-row ">

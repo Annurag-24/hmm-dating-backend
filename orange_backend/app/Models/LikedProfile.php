@@ -14,4 +14,9 @@ class LikedProfile extends Model
     {
         return $this->hasOne(Users::class, 'id', 'user_id');
     }
+
+    function liker()
+    {
+        return $this->hasOne(Users::class, 'id', 'my_user_id');
+    }
 }

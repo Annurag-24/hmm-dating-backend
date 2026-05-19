@@ -10,12 +10,13 @@ $(document).ready(function () {
             $("#city").val() !== "" &&
             $("#bio").val().trim() !== "" &&
             $("#about").val().trim() !== "" &&
-            $("#password").val().trim() !== "";
+            $("#password").val().trim() !== "" &&
+            $("#age").val().trim() !== "";
         $("#imgRequiredHint").toggle(productimages.length === 0);
         $("#submitBtn").prop("disabled", !filled);
     }
 
-    $("#fullname, #bio, #about, #password").on("input", checkFormValidity);
+    $("#fullname, #bio, #about, #password, #age").on("input", checkFormValidity);
     $("#country, #state, #city").on("change", checkFormValidity);
 
     $(document).on("change", "#productimages", function () {
@@ -117,6 +118,7 @@ $(document).ready(function () {
                 formdata.append("bio", $("#bio").val());
                 formdata.append("password", $("#password").val());
                 formdata.append("gender", $("#gender :selected").val());
+                formdata.append("age", $("#age").val());
                 $.ajax({
                     url: `${domainUrl}addFakeUserFromAdmin`,
                     type: "POST",

@@ -168,7 +168,7 @@ class UsersController extends Controller
         $user->city = $request->city;
         $user->about = $request->about;
         $user->bio = $request->bio;
-        $user->dob = \Carbon\Carbon::now()->subYears(rand(20, 40))->format('Y-m-d');
+        $user->dob = \Carbon\Carbon::now()->subYears((int)$request->age)->format('Y-m-d');
         $user->password = $request->password;
         $user->gender = $request->gender;
         $user->is_verified = 2;
@@ -249,16 +249,25 @@ class UsersController extends Controller
         $userLon = $user->longitude;
         $userDistancePreference = $user->distance_preference ?? 100;
 
+        $setting = AppData::first();
+
         $profilesQuery = Users::with('images')
             ->has('images')
             ->whereNotIn('id', $blockedUsers)
             ->whereNotIn('id', $hiddenUsers)
-            ->whereNotIn('id', $swipedUsers) // Exclude all swiped users
+            ->whereNotIn('id', $swipedUsers)
             ->where('is_block', 0)
-            ->when($genderPreference != 3, function ($query) use ($genderPreference) {
-                $query->where('gender', $genderPreference == 1 ? 1 : 2);
+            ->when($setting->include_fake_user_in_matching == 0, function ($query) {
+                $query->where('is_fake', 0);
             })
-            ->whereRaw("TIMESTAMPDIFF(YEAR, dob, CURDATE()) BETWEEN ? AND ?", [$ageMin, $ageMax]);
+            ->when($genderPreference && $genderPreference != 3, function ($query) use ($genderPreference) {
+                $query->where('gender', $genderPreference == 1 ? 2 : 1);
+            })
+            ->when($ageMin && $ageMax, function ($query) use ($ageMin, $ageMax) {
+                $query->whereRaw("TIMESTAMPDIFF(YEAR, dob, CURDATE()) BETWEEN ? AND ?", [$ageMin, $ageMax]);
+            }, function ($query) {
+                $query->whereRaw("TIMESTAMPDIFF(YEAR, dob, CURDATE()) BETWEEN 18 AND 80");
+            });
 
         // Get all matching profiles first (without limit)
         $allProfiles = $profilesQuery->get();
@@ -863,15 +872,15 @@ class UsersController extends Controller
             ]);
         }
 
-        $likedProfiles = LikedProfile::where('my_user_id', $request->user_id)
-            ->where('type', 1) // Only get liked profiles, not disliked
-            ->with('user')
-            ->whereRelation('user', 'is_block', 0)
-            ->has('user.images')
-            ->with('user.images')
+        $likedProfiles = LikedProfile::where('user_id', $request->user_id)
+            ->where('type', 1)
+            ->with('liker')
+            ->whereRelation('liker', 'is_block', 0)
+            ->has('liker.images')
+            ->with('liker.images')
             ->orderBy('id', 'DESC')
             ->get()
-            ->pluck('user');
+            ->pluck('liker');
 
         foreach ($likedProfiles as $likedProfile) {
             $likedProfile->is_like = true;
@@ -1272,7 +1281,7 @@ class UsersController extends Controller
                 : '<span class="badge bg-dark text-white">' . __('app.Female') . '</span>';
 
             $image = (count($item->images) > 0)
-                ? '<img src="public/storage/' . $item->images[0]->image . '" width="50" height="50">'
+                ? '<img src="' . env('image') . $item->images[0]->image . '" width="50" height="50">'
                 : '<img src="http://placehold.jp/150x150.png" width="50" height="50">';
 
             $liveEligible = $item->can_go_live == 2
@@ -1358,7 +1367,7 @@ class UsersController extends Controller
                 : '<span class="badge bg-dark text-white">' . __('app.Female') . '</span>';
 
             $image = (count($item->images) > 0)
-                ? '<img src="public/storage/' . $item->images[0]->image . '" width="50" height="50">'
+                ? '<img src="' . env('image') . $item->images[0]->image . '" width="50" height="50">'
                 : '<img src="http://placehold.jp/150x150.png" width="50" height="50">';
 
             $liveEligible = '<span class="badge bg-success text-white">Yes</span>';
@@ -1429,7 +1438,7 @@ class UsersController extends Controller
                 : '<span class="badge bg-dark text-white">' . __('app.Female') . '</span>';
 
             $image = (count($item->images) > 0)
-                ? '<img src="public/storage/' . $item->images[0]->image . '" width="50" height="50">'
+                ? '<img src="' . env('image') . $item->images[0]->image . '" width="50" height="50">'
                 : '<img src="http://placehold.jp/150x150.png" width="50" height="50">';
 
             $action = '<a href="' . route('viewUserDetails', $item->id) . '" class="btn btn-primary text-white" rel=' . $item->id . '><i class="fas fa-eye"></i></a>';
@@ -1616,7 +1625,7 @@ class UsersController extends Controller
 
         $keyword = $req->keyword ?? '';
 
-        $result = Users::with('images')
+        $query = Users::with('images')
             ->where(function ($q) use ($keyword) {
                 $q->where('fullname', 'LIKE', "%$keyword%")
                     ->orWhere('username', 'LIKE', "%$keyword%");
@@ -1626,15 +1635,16 @@ class UsersController extends Controller
             ->where('id', '!=', $user->id)
             ->has('images')
             ->where('is_block', 0)
-            ->where('anonymous', 0)
-            ->offset((int)$req->start)
-            ->limit((int)$req->count)
-            ->get();
+            ->where('anonymous', 0);
+
+        $total = $query->count();
+        $result = $query->offset((int)$req->start)->limit((int)$req->count)->get();
 
         if ($result->isEmpty()) {
             return response()->json([
                 'status' => true,
                 'message' => 'No data found',
+                'total' => 0,
                 'data' => []
             ]);
         }
@@ -1642,6 +1652,7 @@ class UsersController extends Controller
         return response()->json([
             'status' => true,
             'message' => 'Data retrieved successfully',
+            'total' => $total,
             'data' => $result
         ]);
     }
@@ -2420,11 +2431,13 @@ class UsersController extends Controller
         $userInterests = is_array($user->interests) ? $user->interests : explode(',', $user->interests ?? '');
         $userLanguages = is_array($user->language_keys) ? $user->language_keys : explode(',', $user->language_keys ?? '');
 
-        $array = explode(',', $user->hidden_user_ids);
+        $hiddenIds = array_filter(array_map('intval', explode(',', $user->hidden_user_ids ?? '')), fn($id) => $id > 0);
+        $blockedIds = array_filter(array_map('intval', explode(',', $user->blocked_users ?? '')), fn($id) => $id > 0);
+        $swipedIds = LikedProfile::where('my_user_id', $user->id)->pluck('user_id')->toArray();
+        $excludeIds = array_unique(array_merge($hiddenIds, $blockedIds, $swipedIds, [$user->id]));
 
         $query = Users::where('is_block', 0)
-            ->where('id', '!=', $user->id)
-            ->whereNotIn('id', $array)
+            ->whereNotIn('id', $excludeIds)
             ->with('images')
             ->has('images');
 
@@ -2432,7 +2445,6 @@ class UsersController extends Controller
             $query->where('gender', $request->gender);
         }
 
-        //	0 = Fake user Not Include | 1 = Fake User Include	
         if ($setting->include_fake_user_in_matching == 0) {
             $query->where('is_fake', 0);
         }
@@ -2488,9 +2500,6 @@ class UsersController extends Controller
 
             return $candidate;
         })
-            ->filter(function ($candidate) {
-                return $candidate->match_score > 0;
-            })
             ->sortByDesc('match_score')
             ->values();
 
